@@ -9,6 +9,7 @@
     
     <script>
         window.lessonId = 'do-thi-quang-duong-thoi-gian';
+        // --- LOGIC CHATBOT CŨ ĐÃ ĐƯỢC XÓA KHỎI ĐÂY ---
     </script>
 
     <style>
@@ -68,9 +69,47 @@
     </header>
 
     <div class="container">
-        <section id="phan1" class="card"></section>
-        <section id="phan2" class="card"></section>
-        <section id="phan3" class="card"></section>
+        <section id="phan1" class="card">
+            <h2>Phần I: Khám phá Chuyển động và Đồ thị với PhET</h2>
+            <p>Sử dụng mô phỏng PhET, hãy dùng chuột kéo nhân vật chuyển động. Quan sát đồ thị Quãng đường - Thời gian (Position) được vẽ tự động. Hãy thử làm cho nhân vật: đi nhanh, đi chậm, đứng yên, và đi lùi để xem đồ thị thay đổi như thế nào.</p>
+            <div class="phet-container">
+                <iframe src="https://phet.colorado.edu/sims/html/the-moving-man/latest/the-moving-man_vi.html" width="100%" height="500px" allowfullscreen></iframe>
+            </div>
+        </section>
+
+        <section id="phan2" class="card">
+            <h2>Phần II: Tương tác "Giải mã Hành trình của bạn A"</h2>
+            <div class="journey-decoder">
+                <div class="graph-container">
+                    <svg id="journey-graph" viewBox="0 0 400 250"></svg>
+                </div>
+                <div>
+                    <label for="time-slider">Chọn thời điểm (phút):</label>
+                    <input type="range" id="time-slider" min="0" max="30" value="0" style="width: 100%;">
+                    <h4>Trạng thái hành trình:</h4>
+                    <div id="journey-status">Hãy kéo thanh trượt để bắt đầu.</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="phan3" class="card">
+            <h2>Phần III: Kiến thức cốt lõi cần nhớ</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <svg class="mini-graph" viewBox="0 0 100 50"><polyline class="graph-line" points="10,40 90,10"></polyline></svg>
+                    <p>Đồ thị là đường thẳng <strong>xiên lên</strong>: Vật chuyển động với tốc độ không đổi.</p>
+                </div>
+                <div class="summary-item">
+                    <svg class="mini-graph" viewBox="0 0 100 50"><polyline class="graph-line" points="10,40 50,10" stroke="red"></polyline><polyline class="graph-line" points="50,40 90,30"></polyline></svg>
+                    <p>Đồ thị <strong>càng dốc</strong>: Tốc độ chuyển động càng lớn.</p>
+                </div>
+                <div class="summary-item">
+                    <svg class="mini-graph" viewBox="0 0 100 50"><polyline class="graph-line" points="10,25 90,25"></polyline></svg>
+                    <p>Đồ thị là đường <strong>nằm ngang</strong>: Vật đang đứng yên (v = 0).</p>
+                </div>
+            </div>
+        </section>
+
         <section id="ai-chatbot-card" class="card">
             <h3>🤖 Trợ lý AI</h3>
             <p>Bạn có thắc mắc gì về cách đọc và vẽ đồ thị quãng đường - thời gian không?</p>
@@ -80,14 +119,112 @@
                 <button id="send-button">Gửi</button>
             </div>
         </section>
-        <section id="phan4" class="card"></section>
+
+        <section id="phan4" class="card">
+            <h2>Phần IV: Luyện tập</h2>
+            <div class="graph-container">
+                <h4>Đồ thị quãng đường - thời gian của một người đi xe đạp:</h4>
+                <svg id="practice-graph" viewBox="0 0 400 250"></svg>
+            </div>
+            <div class="exercise-item">
+                <h4>Câu 1 (Đọc đồ thị):</h4>
+                <p>Sau 2 giờ, người đó đi được bao nhiêu km?</p>
+                <input type="number" id="ex1-answer" placeholder="km">
+                <button onclick="checkEx1()">Kiểm tra</button>
+                <div id="feedback-ex1" class="feedback"></div>
+            </div>
+            <div class="exercise-item">
+                <h4>Câu 2 (Tính toán):</h4>
+                <p>Tính tốc độ của người đi xe đạp trong 2 giờ đầu tiên (km/h).</p>
+                <input type="number" id="ex2-answer" placeholder="km/h">
+                <button onclick="checkEx2()">Kiểm tra</button>
+                <div id="feedback-ex2" class="feedback"></div>
+            </div>
+             <div class="exercise-item">
+                <h4>Câu 3 (Phân tích):</h4>
+                <p>Trong khoảng thời gian từ giờ thứ 2 đến giờ thứ 3, người đó làm gì? Tốc độ của họ lúc đó là bao nhiêu?</p>
+                <input type="text" id="ex3-text" placeholder="Hành động (ví dụ: đứng yên)">
+                <input type="number" id="ex3-speed" placeholder="Tốc độ (km/h)">
+                <button onclick="checkEx3()">Kiểm tra</button>
+                <div id="feedback-ex3" class="feedback"></div>
+            </div>
+        </section>
     </div>
 
-    <footer class="site-footer"></footer>
+    <footer class="site-footer">
+        <div class="container">
+            </div>
+    </footer>
     <a href="#page-top" id="back-to-top-btn" title="Lên đầu trang">⬆️</a>
 
     <script>
-        // ... (Toàn bộ script cũ của bài học nằm ở đây) ...
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- PHẦN II: GIẢI MÃ HÀNH TRÌNH ---
+        const svgJourney = document.getElementById('journey-graph');
+        const slider = document.getElementById('time-slider');
+        const statusDiv = document.getElementById('journey-status');
+        const svgNS = "http://www.w3.org/2000/svg";
+        const padding = 30, W = 400, H = 250;
+        const xMax = 30, yMax = 2.5; 
+        const x_scale = (W - 2*padding) / xMax;
+        const y_scale = (H - 2*padding) / yMax;
+        
+        function drawGraph(svg, points) {
+            svg.innerHTML = `
+                <line class="axis" x1="${padding}" y1="${H-padding}" x2="${W-padding}" y2="${H-padding}"></line>
+                <line class="axis" x1="${padding}" y1="${padding}" x2="${padding}" y2="${H-padding}"></line>
+                <text class="axis-label" x="${W/2}" y="${H-5}">t (phút)</text>
+                <text class="axis-label" x="5" y="${H/2}" transform="rotate(-90 10,${H/2})">s (km)</text>
+                <polyline class="graph-line" points="${points}"></polyline>
+            `;
+        }
+        
+        const journeyPoints = [[padding + 0 * x_scale, H - padding - 0 * y_scale],[padding + 15 * x_scale, H - padding - 1.5 * y_scale],[padding + 20 * x_scale, H - padding - 1.5 * y_scale],[padding + 30 * x_scale, H - padding - 2.5 * y_scale]].map(p => p.join(',')).join(' ');
+        drawGraph(svgJourney, journeyPoints);
+        const movingDot = document.createElementNS(svgNS, 'circle');
+        movingDot.id = 'moving-dot';
+        movingDot.setAttribute('r', '5');
+        svgJourney.appendChild(movingDot);
+        
+        function updateJourney(time) {
+            let s;
+            let statusText = '';
+            if (time <= 15) {
+                const v = 1.5 / 15;
+                s = v * time;
+                statusText = `Bạn A đang đi bộ. <br> Tốc độ: ${(v*60).toFixed(1)} km/h.`;
+            } else if (time <= 20) {
+                s = 1.5;
+                statusText = `Bạn A đang đứng yên. <br> Tốc độ: 0 km/h.`;
+            } else {
+                const v = (2.5 - 1.5) / (30 - 20);
+                s = 1.5 + v * (time - 20);
+                statusText = `Bạn A tiếp tục đi bộ. <br> Tốc độ: ${(v*60).toFixed(1)} km/h.`;
+            }
+            movingDot.setAttribute('cx', padding + time * x_scale);
+            movingDot.setAttribute('cy', H - padding - s * y_scale);
+            statusDiv.innerHTML = statusText;
+        }
+
+        slider.addEventListener('input', () => updateJourney(slider.value));
+        updateJourney(0);
+
+        // --- PHẦN IV: ĐỒ THỊ LUYỆN TẬP ---
+        const svgPractice = document.getElementById('practice-graph');
+        const practicePoints = [[padding + 0 * ((W - 2*padding)/4), H - padding - 0 * ((H - 2*padding)/50)],[padding + 2 * ((W - 2*padding)/4), H - padding - 30 * ((H - 2*padding)/50)],[padding + 3 * ((W - 2*padding)/4), H - padding - 30 * ((H - 2*padding)/50)],[padding + 4 * ((W - 2*padding)/4), H - padding - 45 * ((H - 2*padding)/50)],].map(p => p.join(',')).join(' ');
+        drawGraph(svgPractice, practicePoints);
+        svgPractice.querySelector('.axis-label[x="5"]').textContent = 's (km)';
+        svgPractice.querySelector('.axis-label[x="185"]').textContent = 't (giờ)';
+        
+        window.checkEx1 = function() { /*...*/ };
+        window.checkEx2 = function() { /*...*/ };
+        window.checkEx3 = function() { /*...*/ };
+
+        // --- FOOTER & BACK-TO-TOP ---
+        const backToTopBtn = document.getElementById("back-to-top-btn");
+        if(backToTopBtn){ window.onscroll = () => { backToTopBtn.style.display = (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) ? "block" : "none"; }; }
+        document.querySelector('.site-footer').innerHTML = `<div class="container"><div class="footer-grid"><div><h4>Nguồn tham khảo</h4><ul><li>Sách giáo khoa KHTN 7 - Bộ sách Kết nối tri thức.</li><li>PhET Interactive Simulations.</li></ul></div><div><h4>Về trang web</h4><ul><li><a href="/">Về trang danh sách học liệu</a></li></ul></div><div><h4>Bản quyền & Liên hệ</h4><p>&copy; ${new Date().getFullYear()}-nungvanhien</p><p>Góp ý: <a href="mailto:gopy@example.com">vanhien1199</a></p></div></div></div>`;
+    });
     </script>
     
     <script>
@@ -96,18 +233,36 @@
         const sendButton = document.getElementById('send-button');
         const AI_SERVICE_URL = 'https://ai-trung-tam-service.onrender.com';
         const LESSON_ID = window.lessonId || 'default';
-
-        if (sendButton) {
+        if(sendButton){
             sendButton.addEventListener('click', askAI);
             userInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') askAI(); });
         }
-
         function addMessageToChat(text, className) {
-            // ...
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-message', className);
+            chatWindow.appendChild(messageElement);
+            messageElement.innerHTML = marked.parse(text);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            return messageElement;
         }
-
         async function askAI() {
-            // ...
+            const question = userInput.value.trim();
+            if (!question) return;
+            addMessageToChat(question, 'user-message');
+            userInput.value = '';
+            const waitingMessage = addMessageToChat('Trợ lý AI đang suy nghĩ...', 'ai-message');
+            try {
+                const response = await fetch(`${AI_SERVICE_URL}/ask`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: question, lesson_id: LESSON_ID })
+                });
+                if (!response.ok) throw new Error('Lỗi mạng hoặc server');
+                const data = await response.json();
+                waitingMessage.innerHTML = marked.parse(data.answer);
+            } catch (error) {
+                waitingMessage.innerHTML = marked.parse('**Xin lỗi, đã có lỗi xảy ra!**');
+            }
         }
     </script>
 </body>
