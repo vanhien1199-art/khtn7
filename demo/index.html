@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bài 9: Thực hành Đo tốc độ</title>
+
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script> window.lessonId = 'thuc-hanh-do-toc-do'; </script>
-    <script src="../shared/chatbot.js"></script>
+    <script>
+        window.lessonId = 'thuc-hanh-do-toc-do';
+    </script>
     <style>
         :root { --primary-color: #2196F3; --secondary-color: #FFC107; --bg-color: #f0f4f8; --card-bg-color: #ffffff; --text-color: #333; --correct-color: #4caf50; --incorrect-color: #f44336; }
         body { font-family: 'Segoe UI', sans-serif; line-height: 1.7; background-color: var(--bg-color); color: var(--text-color); margin: 0; }
@@ -27,6 +29,20 @@
         .site-footer h4 { color: var(--secondary-color); } .site-footer ul { list-style-type: none; padding: 0; }
         .site-footer a { color: #f1f1f1; text-decoration: none; }
         #back-to-top-btn { display: none; position: fixed; bottom: 20px; right: 20px; z-index: 999; background-color: var(--secondary-color); color: var(--text-color); cursor: pointer; padding: 10px; border-radius: 50%; font-size: 18px; width: 50px; height: 50px; text-align: center; line-height: 30px; text-decoration: none; border: none;}
+        
+        /* CSS riêng cho bài học này */
+        .simulation-area { background-color: #e3f2fd; padding: 20px; border-radius: 8px; }
+        .track { position: relative; height: 80px; background-color: #bdbdbd; border: 2px solid #757575; margin: 20px 0; }
+        .track-line { position: absolute; top: 0; height: 100%; width: 3px; background-color: white; }
+        .start-line { left: 10%; }
+        .finish-line { left: 90%; }
+        .car { position: absolute; top: 50%; transform: translateY(-50%); width: 60px; height: 30px; background-color: #f44336; border-radius: 5px; left: 2%; transition: left 4s linear; }
+        .car.moving { left: 95%; }
+        .controls, .results { margin-top: 15px; }
+        .timer-display { background-color: #333; color: #00ff00; font-family: 'Courier New', Courier, monospace; font-size: 2em; padding: 10px; text-align: center; border-radius: 5px; }
+        .feedback { margin-top: 10px; font-weight: bold; }
+        .feedback.correct { color: var(--correct-color); }
+        .feedback.incorrect { color: var(--incorrect-color); }
     </style>
 </head>
 <body id="page-top">
@@ -35,9 +51,26 @@
         <h1>Bài 9: THỰC HÀNH ĐO TỐC ĐỘ</h1>
     </header>
     <div class="container">
-        <section class="card">
-            <h2>Nội dung bài học</h2>
-            <p>Phần nội dung chính của bài học Đo Tốc độ sẽ được hiển thị ở đây.</p>
+        <section id="phan1" class="card">
+            <h2>Phần I: Mô phỏng "Đo tốc độ bằng Đồng hồ bấm giây"</h2>
+            <p>Trong thí nghiệm này, em sẽ tự tay bấm giờ để đo thời gian một chiếc xe đi hết quãng đường <strong>s = 80 cm (0.8 m)</strong>.</p>
+            <div class="simulation-area">
+                <div class="track">
+                    <div class="track-line start-line"></div>
+                    <div class="track-line finish-line"></div>
+                    <div id="car1" class="car"></div>
+                </div>
+                <div class="controls">
+                    <button id="start-car1">Cho xe chạy</button>
+                    <button id="stopwatch-btn">Bấm giờ</button>
+                    <button id="reset-sim1">Làm lại</button>
+                </div>
+                <div class="results">
+                    <h4>Đồng hồ của bạn:</h4>
+                    <div id="stopwatch-display" class="timer-display">00:00.000</div>
+                    <div id="result-sim1" class="feedback" style="display:none;"></div>
+                </div>
+            </div>
         </section>
         
         <section id="ai-chatbot-card" class="card">
@@ -49,17 +82,72 @@
                 <button id="send-button">Gửi</button>
             </div>
         </section>
-    </div>
+        </div>
     <footer class="site-footer">
         </footer>
     <a href="#page-top" id="back-to-top-btn" title="Lên đầu trang">⬆️</a>
+
     <script>
+    // Script riêng cho các tương tác của bài học này
     document.addEventListener('DOMContentLoaded', function() {
+        const car1 = document.getElementById('car1');
+        const startCar1Btn = document.getElementById('start-car1');
+        const stopwatchBtn = document.getElementById('stopwatch-btn');
+        const stopwatchDisplay = document.getElementById('stopwatch-display');
+        const resultSim1 = document.getElementById('result-sim1');
+        const resetSim1Btn = document.getElementById('reset-sim1');
+
+        let isCar1Moving = false, isTimerRunning = false;
+        let timerStartTime, timerInterval;
+        const s = 0.8; 
+        const actual_t1 = 4.0; 
+        
+        startCar1Btn.addEventListener('click', () => {
+            if (isCar1Moving) return;
+            car1.classList.add('moving');
+            isCar1Moving = true;
+            startCar1Btn.disabled = true;
+        });
+
+        stopwatchBtn.addEventListener('click', () => {
+            if (!isCar1Moving) return;
+            if (!isTimerRunning) {
+                isTimerRunning = true;
+                timerStartTime = Date.now();
+                timerInterval = setInterval(() => {
+                    const elapsed = Date.now() - timerStartTime;
+                    stopwatchDisplay.textContent = new Date(elapsed).toISOString().slice(14, 23);
+                }, 1);
+                stopwatchBtn.textContent = "Dừng giờ";
+            } else {
+                clearInterval(timerInterval);
+                const user_t = (Date.now() - timerStartTime) / 1000;
+                const error = Math.abs(user_t - actual_t1);
+                resultSim1.style.display = 'block';
+                resultSim1.innerHTML = `Thời gian bạn đo: <strong>${user_t.toFixed(3)} s</strong>. Thời gian thực tế: <strong>${actual_t1.toFixed(3)} s</strong>. Sai số: <strong>${error.toFixed(3)} s</strong>.`;
+                stopwatchBtn.disabled = true;
+            }
+        });
+
+        resetSim1Btn.addEventListener('click', () => {
+            car1.classList.remove('moving');
+            isCar1Moving = false;
+            isTimerRunning = false;
+            clearInterval(timerInterval);
+            startCar1Btn.disabled = false;
+            stopwatchBtn.disabled = false;
+            stopwatchBtn.textContent = "Bấm giờ";
+            stopwatchDisplay.textContent = "00:00.000";
+            resultSim1.style.display = 'none';
+        });
+
         const backToTopBtn = document.getElementById("back-to-top-btn");
         if(backToTopBtn){ window.onscroll = () => { backToTopBtn.style.display = (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) ? "block" : "none"; }; }
         const footer = document.querySelector('.site-footer');
         if (footer) footer.innerHTML = `<div class="container"><div class="footer-grid"><div><h4>Nguồn tham khảo</h4><ul><li>Sách giáo khoa KHTN 8 - Bộ sách Kết nối tri thức.</li></ul></div><div><h4>Về trang web</h4><ul><li><a href="/">Về trang danh sách học liệu</a></li></ul></div><div><h4>Bản quyền & Liên hệ</h4><p>&copy; ${new Date().getFullYear()}</p><p>Góp ý: <a href="mailto:gopy@example.com">gopy@example.com</a></p></div></div></div>`;
     });
     </script>
+    
+    <script src="../shared/chatbot.js"></script>
 </body>
 </html>
