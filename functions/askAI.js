@@ -23,7 +23,7 @@ export async function onRequest(context) {
         }
         
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image" });
 
         const systemPrompt = lessonPrompts[lesson_id] || lessonPrompts['default'];
         const fullPrompt = `${systemPrompt}\n\nCâu hỏi của học sinh: "${question}"`;
@@ -41,3 +41,4 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
 }
+
