@@ -9,7 +9,44 @@
     
     <script>
         window.lessonId = 'do-thi-quang-duong-thoi-gian';
-        // --- LOGIC CHATBOT CŨ ĐÃ ĐƯỢC XÓA KHỎI ĐÂY ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const chatWindow = document.getElementById('chat-window');
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+            const AI_SERVICE_URL = 'https://ai-trung-tam-service.onrender.com';
+            const LESSON_ID = window.lessonId || 'default';
+            if(sendButton){
+                sendButton.addEventListener('click', askAI);
+                userInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') askAI(); });
+            }
+            function addMessageToChat(text, className) {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('chat-message', className);
+                chatWindow.appendChild(messageElement);
+                messageElement.innerHTML = marked.parse(text);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+                return messageElement;
+            }
+            async function askAI() {
+                const question = userInput.value.trim();
+                if (!question) return;
+                addMessageToChat(question, 'user-message');
+                userInput.value = '';
+                const waitingMessage = addMessageToChat('Trợ lý AI đang suy nghĩ...', 'ai-message');
+                try {
+                    const response = await fetch(`${AI_SERVICE_URL}/ask`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ question: question, lesson_id: LESSON_ID })
+                    });
+                    if (!response.ok) throw new Error('Lỗi mạng hoặc server');
+                    const data = await response.json();
+                    waitingMessage.innerHTML = marked.parse(data.answer);
+                } catch (error) {
+                    waitingMessage.innerHTML = marked.parse('**Xin lỗi, đã có lỗi xảy ra!**');
+                }
+            }
+        });
     </script>
 
     <style>
@@ -32,9 +69,14 @@
         button { background-color: var(--secondary-color); color: var(--text-color); border: none; padding: 10px 20px; font-size: 1em; border-radius: 5px; cursor: pointer; transition: all 0.3s ease; }
         button:hover { background-color: #ffb300; }
         input[type="number"], input[type="text"] { padding: 8px; border-radius: 5px; border: 1px solid #ccc; margin: 0 5px; }
+        
         .home-btn { position: absolute; top: 50%; left: 20px; transform: translateY(-50%); font-size: 28px; color: white; text-decoration: none; opacity: 0.8; }
+        
+        /* Phần I: PhET */
         .phet-container { border: 2px solid var(--primary-color); border-radius: 8px; overflow: hidden; margin-top: 20px; }
         .phet-container iframe { display: block; border: none; }
+
+        /* Phần II: Giải mã hành trình */
         .journey-decoder { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: center; }
         .graph-container { border: 1px solid #ccc; padding: 10px; border-radius: 5px; }
         .graph-line { fill: none; stroke: var(--primary-color); stroke-width: 3; }
@@ -42,14 +84,20 @@
         .axis, .grid-line { stroke: #ccc; stroke-width: 1; }
         .axis-label { font-size: 0.8em; fill: #555; }
         #journey-status { background-color: #f1f8e9; padding: 15px; border-radius: 5px; border-left: 5px solid var(--correct-color); }
+        
+        /* Phần III: Kiến thức */
         .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; text-align: center; }
         .summary-item { border: 1px solid #eee; padding: 15px; border-radius: 8px; }
         .mini-graph { width: 100%; height: 100px; border: 1px solid #ddd; }
         .mini-graph .graph-line { stroke-width: 2; }
+        
+        /* Phần IV: Luyện tập */
         .exercise-item { border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px; }
         .feedback { margin-top: 10px; font-weight: bold; }
         .feedback.correct { color: var(--correct-color); }
         .feedback.incorrect { color: var(--incorrect-color); }
+
+        /* CSS Chatbot, Footer, Back-to-Top */
         .chat-window { height: 300px; border: 1px solid #ccc; padding: 10px; overflow-y: auto; margin-bottom: 10px; }
         .chat-message { margin-bottom: 10px; } .user-message { text-align: right; }
         .ai-message { background-color: #f1f1f1; padding: 10px; border-radius: 8px; display: inline-block; max-width: 90%; text-align: left; }
@@ -164,12 +212,15 @@
         const slider = document.getElementById('time-slider');
         const statusDiv = document.getElementById('journey-status');
         const svgNS = "http://www.w3.org/2000/svg";
+        
+        // Cài đặt đồ thị
         const padding = 30, W = 400, H = 250;
-        const xMax = 30, yMax = 2.5; 
+        const xMax = 30, yMax = 2.5; // 30 phút, 2.5 km
         const x_scale = (W - 2*padding) / xMax;
         const y_scale = (H - 2*padding) / yMax;
         
         function drawGraph(svg, points) {
+            // Vẽ trục
             svg.innerHTML = `
                 <line class="axis" x1="${padding}" y1="${H-padding}" x2="${W-padding}" y2="${H-padding}"></line>
                 <line class="axis" x1="${padding}" y1="${padding}" x2="${padding}" y2="${H-padding}"></line>
@@ -179,7 +230,14 @@
             `;
         }
         
-        const journeyPoints = [[padding + 0 * x_scale, H - padding - 0 * y_scale],[padding + 15 * x_scale, H - padding - 1.5 * y_scale],[padding + 20 * x_scale, H - padding - 1.5 * y_scale],[padding + 30 * x_scale, H - padding - 2.5 * y_scale]].map(p => p.join(',')).join(' ');
+        // Dữ liệu đồ thị của Bạn A: (0,0) -> (15, 1.5) -> (20, 1.5) -> (30, 2.5)
+        const journeyPoints = [
+            [padding + 0 * x_scale, H - padding - 0 * y_scale],
+            [padding + 15 * x_scale, H - padding - 1.5 * y_scale],
+            [padding + 20 * x_scale, H - padding - 1.5 * y_scale],
+            [padding + 30 * x_scale, H - padding - 2.5 * y_scale]
+        ].map(p => p.join(',')).join(' ');
+
         drawGraph(svgJourney, journeyPoints);
         const movingDot = document.createElementNS(svgNS, 'circle');
         movingDot.id = 'moving-dot';
@@ -190,14 +248,14 @@
             let s;
             let statusText = '';
             if (time <= 15) {
-                const v = 1.5 / 15;
+                const v = 1.5 / 15; // km/phút
                 s = v * time;
                 statusText = `Bạn A đang đi bộ. <br> Tốc độ: ${(v*60).toFixed(1)} km/h.`;
             } else if (time <= 20) {
                 s = 1.5;
                 statusText = `Bạn A đang đứng yên. <br> Tốc độ: 0 km/h.`;
             } else {
-                const v = (2.5 - 1.5) / (30 - 20);
+                const v = (2.5 - 1.5) / (30 - 20); // km/phút
                 s = 1.5 + v * (time - 20);
                 statusText = `Bạn A tiếp tục đi bộ. <br> Tốc độ: ${(v*60).toFixed(1)} km/h.`;
             }
@@ -207,63 +265,58 @@
         }
 
         slider.addEventListener('input', () => updateJourney(slider.value));
-        updateJourney(0);
+        updateJourney(0); // Trạng thái ban đầu
 
         // --- PHẦN IV: ĐỒ THỊ LUYỆN TẬP ---
         const svgPractice = document.getElementById('practice-graph');
-        const practicePoints = [[padding + 0 * ((W - 2*padding)/4), H - padding - 0 * ((H - 2*padding)/50)],[padding + 2 * ((W - 2*padding)/4), H - padding - 30 * ((H - 2*padding)/50)],[padding + 3 * ((W - 2*padding)/4), H - padding - 30 * ((H - 2*padding)/50)],[padding + 4 * ((W - 2*padding)/4), H - padding - 45 * ((H - 2*padding)/50)],].map(p => p.join(',')).join(' ');
+        // Dữ liệu: (0,0) -> (2, 30) -> (3, 30) -> (4, 45)
+        const practicePoints = [
+            [padding + 0 * ((W - 2*padding)/4), H - padding - 0 * ((H - 2*padding)/50)],
+            [padding + 2 * ((W - 2*padding)/4), H - padding - 30 * ((H - 2*padding)/50)],
+            [padding + 3 * ((W - 2*padding)/4), H - padding - 30 * ((H - 2*padding)/50)],
+            [padding + 4 * ((W - 2*padding)/4), H - padding - 45 * ((H - 2*padding)/50)],
+        ].map(p => p.join(',')).join(' ');
         drawGraph(svgPractice, practicePoints);
         svgPractice.querySelector('.axis-label[x="5"]').textContent = 's (km)';
         svgPractice.querySelector('.axis-label[x="185"]').textContent = 't (giờ)';
         
-        window.checkEx1 = function() { /*...*/ };
-        window.checkEx2 = function() { /*...*/ };
-        window.checkEx3 = function() { /*...*/ };
+        window.checkEx1 = function() {
+            const ans = document.getElementById('ex1-answer').value;
+            const feedback = document.getElementById('feedback-ex1');
+            if (parseInt(ans) === 30) {
+                feedback.textContent = 'Chính xác!'; feedback.className = 'feedback correct';
+            } else {
+                feedback.textContent = 'Chưa đúng, hãy gióng từ trục thời gian lên đồ thị rồi gióng ngang qua trục quãng đường.'; feedback.className = 'feedback incorrect';
+            }
+        };
+        window.checkEx2 = function() {
+            const ans = document.getElementById('ex2-answer').value;
+            const feedback = document.getElementById('feedback-ex2');
+            if (parseInt(ans) === 15) {
+                feedback.textContent = 'Đúng rồi! v = s/t = 30km / 2h = 15 km/h.'; feedback.className = 'feedback correct';
+            } else {
+                feedback.textContent = 'Chưa đúng, hãy áp dụng công thức v = s/t.'; feedback.className = 'feedback incorrect';
+            }
+        };
+        window.checkEx3 = function() {
+            const textAns = document.getElementById('ex3-text').value;
+            const speedAns = document.getElementById('ex3-speed').value;
+            const feedback = document.getElementById('feedback-ex3');
+            if (textAns.toLowerCase().includes('đứng yên') && parseInt(speedAns) === 0) {
+                feedback.textContent = 'Chính xác! Đồ thị nằm ngang cho thấy quãng đường không đổi, tức là vật đứng yên (v=0).'; feedback.className = 'feedback correct';
+            } else {
+                feedback.textContent = 'Chưa đúng. Hãy quan sát đoạn đồ thị nằm ngang.'; feedback.className = 'feedback incorrect';
+            }
+        };
 
         // --- FOOTER & BACK-TO-TOP ---
         const backToTopBtn = document.getElementById("back-to-top-btn");
         if(backToTopBtn){ window.onscroll = () => { backToTopBtn.style.display = (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) ? "block" : "none"; }; }
-        document.querySelector('.site-footer').innerHTML = `<div class="container"><div class="footer-grid"><div><h4>Nguồn tham khảo</h4><ul><li>Sách giáo khoa KHTN 7 - Bộ sách Kết nối tri thức.</li><li>PhET Interactive Simulations.</li></ul></div><div><h4>Về trang web</h4><ul><li><a href="/">Về trang danh sách học liệu</a></li></ul></div><div><h4>Bản quyền & Liên hệ</h4><p>&copy; ${new Date().getFullYear()}-nungvanhien</p><p>Góp ý: <a href="mailto:gopy@example.com">vanhien1199</a></p></div></div></div>`;
+        const yearSpan = document.getElementById('copyright-year');
+        if (yearSpan) { yearSpan.textContent = new Date().getFullYear(); }
+        document.querySelector('.site-footer').innerHTML = `<div class="container"><div class="footer-grid"><div><h4>Nguồn tham khảo</h4><ul><li>Sách giáo khoa KHTN 7 - Bộ sách Kết nối tri thức.</li><li>PhET Interactive Simulations.</li></ul></div><div><h4>Về trang web</h4><ul><li><a href="/">Về trang danh sách học liệu</a></li></ul></div><div><h4>Bản quyền & Liên hệ</h4><p>&copy; <span id="copyright-year">${new Date().getFullYear()}</span>-nungvanhien</p><p>Góp ý: <a href="mailto:gopy@example.com">vanhien1199</a></p></div></div></div>`;
     });
     </script>
-    
-    <script>
-        const chatWindow = document.getElementById('chat-window');
-        const userInput = document.getElementById('user-input');
-        const sendButton = document.getElementById('send-button');
-        const AI_SERVICE_URL = 'https://ai-trung-tam-service.onrender.com';
-        const LESSON_ID = window.lessonId || 'default';
-        if(sendButton){
-            sendButton.addEventListener('click', askAI);
-            userInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') askAI(); });
-        }
-        function addMessageToChat(text, className) {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('chat-message', className);
-            chatWindow.appendChild(messageElement);
-            messageElement.innerHTML = marked.parse(text);
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-            return messageElement;
-        }
-        async function askAI() {
-            const question = userInput.value.trim();
-            if (!question) return;
-            addMessageToChat(question, 'user-message');
-            userInput.value = '';
-            const waitingMessage = addMessageToChat('Trợ lý AI đang suy nghĩ...', 'ai-message');
-            try {
-                const response = await fetch(`${AI_SERVICE_URL}/ask`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question: question, lesson_id: LESSON_ID })
-                });
-                if (!response.ok) throw new Error('Lỗi mạng hoặc server');
-                const data = await response.json();
-                waitingMessage.innerHTML = marked.parse(data.answer);
-            } catch (error) {
-                waitingMessage.innerHTML = marked.parse('**Xin lỗi, đã có lỗi xảy ra!**');
-            }
-        }
-    </script>
+ <script src="../shared/chatbot.js"></script>
 </body>
 </html>
