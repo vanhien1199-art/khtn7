@@ -65,6 +65,7 @@ async function askAI() {
 
     } catch (error) {
         console.error("Lỗi khi gọi AI:", error);
-        waitingMessage.innerHTML = marked.parse(`**Xin lỗi, đã có lỗi xảy ra!** (${error.message})`);
+        waitingMessage.innerHTML = marked.parse(`Xin lỗi, Trợ lí AI hiện đang quá tải! Vui lòng thử lại sau ít phút (${error.message})`);
     }
 }
+
